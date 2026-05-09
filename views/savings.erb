@@ -1,42 +1,177 @@
+<%
+  total_weight = @savings_allocations.sum { |a| a[:weight] }.to_f
+  alloc_data   = @savings_allocations.map do |a|
+    pct    = total_weight > 0 ? (a[:weight] / total_weight * 100).round(1) : 0
+    amount = pct / 100.0 * @savings_pool
+    { allocation: a, pct: pct, amount: amount }
+  end
+%>
+
 <div class="mb-6">
   <h1 class="text-xl font-semibold text-slate-900">Savings</h1>
-  <p class="text-sm text-slate-500 mt-1">Allocate a portion of your savings pool to named goals.</p>
+  <p class="text-sm text-slate-500 mt-1">Set the weight of each goal with sliders, choose a type, then save.</p>
 </div>
+
+<form method="post" action="/savings/weights" id="weights-form">
+  <% unless @savings_allocations.empty? %>
+    <div class="flex justify-end mb-3">
+      <button type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        Save Allocations
+      </button>
+    </div>
+  <% end %>
+
+  <div id="allocations-list" class="space-y-3 mb-4">
+    <% if @savings_allocations.empty? %>
+      <div id="savings-empty" class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm p-8 text-center text-sm text-slate-400">
+        No savings goals yet. Add one below.
+      </div>
+    <% else %>
+      <% alloc_data.each do |d| %>
+        <%= erb :savings_card, locals: { allocation: d[:allocation], pct: d[:pct], amount: d[:amount] } %>
+      <% end %>
+    <% end %>
+  </div>
+</form>
+
+<%
+  projections = alloc_data.select do |d|
+    a = d[:allocation]
+    (a[:saving_type] == 'investment' && a[:return_rate].to_f > 0) ||
+    (a[:saving_type] == 'spending'   && a[:goal_date].to_s != '' && !spending_projection(d[:amount], a[:goal_date]).empty?)
+  end
+%>
+
+<% unless projections.empty? %>
+<div class="mb-4">
+  <h2 class="text-base font-semibold text-slate-900 mb-3">Projections</h2>
+  <div class="space-y-4">
+    <% projections.each do |d| %>
+      <% a = d[:allocation] %>
+      <% monthly = d[:amount] %>
+
+      <% if a[:saving_type] == 'investment' %>
+        <% years = [a[:projection_years] || 30, 1].max %>
+        <% proj = investment_projection(monthly, a[:return_rate], years: years) %>
+        <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+          <div class="px-6 py-4 border-b border-slate-100">
+            <h3 class="text-sm font-semibold text-slate-900"><%= a[:name] %> — Investment Growth</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              $<%= "%.2f" % monthly %>/mo at <%= a[:return_rate] %>% annual return &mdash;
+              projected value after <%= years %> <%= years == 1 ? 'year' : 'years' %>: <strong class="text-emerald-600">$<%= number_with_commas(proj.last[0]) %></strong>
+            </p>
+          </div>
+          <div class="px-6 py-6">
+            <canvas id="chart-<%= a[:id] %>" style="max-height:260px"></canvas>
+          </div>
+        </div>
+        <script>
+          new Chart(document.getElementById('chart-<%= a[:id] %>'), {
+            type: 'line',
+            data: {
+              labels: <%= (1..years).map { |y| "Year #{y}" }.to_json %>,
+              datasets: [
+                {
+                  label: 'With returns',
+                  data: <%= proj.map { |p| p[0] }.to_json %>,
+                  borderColor: '#6366f1',
+                  backgroundColor: 'rgba(99,102,241,0.08)',
+                  fill: true,
+                  tension: 0.4,
+                  pointRadius: 0
+                },
+                {
+                  label: 'Contributions only',
+                  data: <%= proj.map { |p| p[1] }.to_json %>,
+                  borderColor: '#cbd5e1',
+                  borderDash: [5, 4],
+                  fill: false,
+                  tension: 0,
+                  pointRadius: 0
+                }
+              ]
+            },
+            options: {
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 12 } } },
+                tooltip: {
+                  callbacks: {
+                    label: c => ' ' + c.dataset.label + ': $' + c.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                  }
+                }
+              },
+              scales: {
+                x: { grid: { display: false } },
+                y: { ticks: { callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, grid: { color: '#f1f5f9' } }
+              }
+            }
+          });
+        </script>
+
+      <% elsif a[:saving_type] == 'spending' %>
+        <% proj = spending_projection(monthly, a[:goal_date]) %>
+        <% final = proj.last %>
+        <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+          <div class="px-6 py-4 border-b border-slate-100">
+            <h3 class="text-sm font-semibold text-slate-900"><%= a[:name] %> — Spending Goal</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              $<%= "%.2f" % monthly %>/mo &mdash; by <%= a[:goal_date] %> you'll have
+              <strong class="text-indigo-600">$<%= number_with_commas(final[1]) %></strong>
+              (<%= proj.length %> months)
+            </p>
+          </div>
+          <div class="px-6 py-6">
+            <canvas id="chart-<%= a[:id] %>" style="max-height:220px"></canvas>
+          </div>
+        </div>
+        <script>
+          new Chart(document.getElementById('chart-<%= a[:id] %>'), {
+            type: 'line',
+            data: {
+              labels: <%= proj.map { |p| p[0] }.to_json %>,
+              datasets: [{
+                label: 'Accumulated savings',
+                data: <%= proj.map { |p| p[1] }.to_json %>,
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6,182,212,0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: c => ' $' + c.parsed.y.toFixed(2) } }
+              },
+              scales: {
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+                y: { ticks: { callback: v => '$' + v }, grid: { color: '#f1f5f9' } }
+              }
+            }
+          });
+        </script>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+<% end %>
 
 <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
   <div class="px-6 py-4 border-b border-slate-100">
-    <h2 class="text-sm font-semibold text-slate-900">Savings Allocations</h2>
+    <h2 class="text-sm font-semibold text-slate-900">Add Goal</h2>
   </div>
   <div class="px-6 py-4">
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="border-b border-slate-100 text-left">
-          <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
-          <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Rate</th>
-          <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="savings-rows" class="divide-y divide-slate-50">
-        <% @savings_allocations.each do |allocation| %>
-          <%= erb :savings_row, locals: { allocation: allocation, savings_pool: @savings_pool } %>
-        <% end %>
-      </tbody>
-    </table>
-
     <form hx-post="/savings"
-          hx-target="#savings-rows"
+          hx-target="#allocations-list"
           hx-swap="beforeend"
-          class="flex gap-3 mt-6 pt-5 border-t border-slate-100">
+          hx-on::after-request="this.reset(); document.getElementById('savings-empty')?.remove(); updateAllocations()"
+          class="flex gap-3">
       <input type="text" name="name"
              class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-             placeholder="Name" required>
-      <div class="relative w-48">
-        <input type="number" name="rate"
-               class="w-full rounded-lg border border-slate-200 px-3 py-2 pr-7 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-               placeholder="Rate %" step="1" min="0" max="100" required>
-        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">%</span>
-      </div>
+             placeholder="Goal name (e.g. Emergency Fund)" required>
       <button type="submit"
               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
         Add
@@ -44,3 +179,28 @@
     </form>
   </div>
 </div>
+
+<script>
+  Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+  Chart.defaults.color = '#94a3b8';
+
+  const savingsPool = <%= @savings_pool.to_f %>;
+
+  function updateAllocations() {
+    const sliders = Array.from(document.querySelectorAll('.weight-slider'));
+    if (!sliders.length) return;
+    const total = sliders.reduce((sum, s) => sum + parseInt(s.value), 0);
+    sliders.forEach(slider => {
+      const pct    = total > 0 ? parseInt(slider.value) / total * 100 : 0;
+      const card   = slider.closest('[id^="savings-"]');
+      card.querySelector('.pct-cell').textContent = pct.toFixed(1) + '%';
+      card.querySelector('.amt-cell').textContent = '$' + (pct / 100 * savingsPool).toFixed(2);
+    });
+  }
+
+  function updateTypeFields(select) {
+    const id = select.dataset.id;
+    document.getElementById('rate-field-' + id).classList.toggle('hidden', select.value !== 'investment');
+    document.getElementById('goal-field-' + id).classList.toggle('hidden', select.value !== 'spending');
+  }
+</script>

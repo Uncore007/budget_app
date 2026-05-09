@@ -1,0 +1,57 @@
+<div id="savings-<%= allocation[:id] %>" class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+  <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+    <span class="font-medium text-slate-900"><%= allocation[:name] %></span>
+    <div class="flex items-center gap-3">
+      <select name="type[<%= allocation[:id] %>]"
+              data-id="<%= allocation[:id] %>"
+              onchange="updateTypeFields(this)"
+              class="rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="other"      <%= (allocation[:saving_type] || 'other') == 'other'      ? 'selected' : '' %>>Other</option>
+        <option value="investment" <%= (allocation[:saving_type] || 'other') == 'investment' ? 'selected' : '' %>>Investment</option>
+        <option value="spending"   <%= (allocation[:saving_type] || 'other') == 'spending'   ? 'selected' : '' %>>Spending Goal</option>
+      </select>
+      <button type="button"
+              class="text-slate-300 hover:text-red-500 text-xs transition-colors"
+              hx-delete="/savings/<%= allocation[:id] %>"
+              hx-target="#savings-<%= allocation[:id] %>"
+              hx-swap="outerHTML"
+              hx-on::after-request="updateAllocations()">Delete</button>
+    </div>
+  </div>
+  <div class="px-6 py-4 space-y-3">
+    <div class="flex items-center gap-4">
+      <input type="range" name="weight[<%= allocation[:id] %>]"
+             value="<%= allocation[:weight] %>" min="1" max="100"
+             class="weight-slider flex-1 accent-indigo-600 cursor-pointer"
+             oninput="updateAllocations()">
+      <span class="pct-cell w-12 text-right text-sm font-medium text-slate-700"><%= pct %>%</span>
+      <span class="amt-cell w-24 text-right font-medium text-slate-900">$<%= "%.2f" % amount %></span>
+    </div>
+
+    <div id="rate-field-<%= allocation[:id] %>"
+         class="flex items-center gap-2 text-sm <%= (allocation[:saving_type] || 'other') == 'investment' ? '' : 'hidden' %>">
+      <span class="text-slate-500">Annual return</span>
+      <div class="relative">
+        <input type="number" name="return_rate[<%= allocation[:id] %>]"
+               value="<%= allocation[:return_rate] || 7.0 %>"
+               step="0.1" min="0" max="100"
+               class="w-24 rounded-lg border border-slate-200 px-3 py-1.5 pr-7 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">%</span>
+      </div>
+      <span class="text-slate-500">over</span>
+      <input type="number" name="projection_years[<%= allocation[:id] %>]"
+             value="<%= allocation[:projection_years] || 30 %>"
+             step="1" min="1" max="50"
+             class="w-16 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <span class="text-slate-500">years</span>
+    </div>
+
+    <div id="goal-field-<%= allocation[:id] %>"
+         class="flex items-center gap-2 text-sm <%= (allocation[:saving_type] || 'other') == 'spending' ? '' : 'hidden' %>">
+      <span class="text-slate-500">Goal date</span>
+      <input type="date" name="goal_date[<%= allocation[:id] %>]"
+             value="<%= allocation[:goal_date] %>"
+             class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    </div>
+  </div>
+</div>

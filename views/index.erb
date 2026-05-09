@@ -1,6 +1,10 @@
 <%
-  total_savings = @savings_allocations.sum { |a| a[:rate] * @savings_pool }
-  remaining     = @savings_pool - total_savings
+  total_weight  = @savings_allocations.sum { |a| a[:weight] }.to_f
+  total_savings = @savings_allocations.sum { |a|
+    pct = total_weight > 0 ? a[:weight] / total_weight : 0
+    pct * @savings_pool
+  }
+  remaining = @savings_pool - total_savings
 %>
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -69,17 +73,18 @@
           </thead>
           <tbody class="divide-y divide-slate-50">
             <% @savings_allocations.each do |a| %>
+              <% a_pct = total_weight > 0 ? (a[:weight] / total_weight * 100).round(1) : 0 %>
               <tr>
                 <td class="py-3 text-slate-900"><%= a[:name] %></td>
-                <td class="py-3 text-right text-slate-500"><%= (a[:rate] * 100).round(1) %>%</td>
-                <td class="py-3 text-right font-medium">$<%= "%.2f" % (a[:rate] * @savings_pool) %></td>
+                <td class="py-3 text-right text-slate-500"><%= a_pct %>%</td>
+                <td class="py-3 text-right font-medium">$<%= "%.2f" % (a_pct / 100.0 * @savings_pool) %></td>
               </tr>
             <% end %>
           </tbody>
           <tfoot class="border-t border-slate-200">
             <tr>
               <td class="pt-3 font-semibold">Total</td>
-              <td class="pt-3 text-right font-semibold"><%= (@savings_allocations.sum { |a| a[:rate] } * 100).round(1) %>%</td>
+              <td class="pt-3 text-right font-semibold">100%</td>
               <td class="pt-3 text-right font-semibold">$<%= "%.2f" % total_savings %></td>
             </tr>
           </tfoot>
@@ -91,15 +96,24 @@
 
 <%
   palette        = %w[#6366f1 #06b6d4 #10b981 #f59e0b #f43f5e #8b5cf6]
+  exp_palette    = %w[#6366f1 #06b6d4 #10b981 #f59e0b #f43f5e #8b5cf6 #ec4899 #14b8a6]
   savings_names  = @savings_allocations.map { |a| a[:name] }
-  savings_vals   = @savings_allocations.map { |a| (a[:rate] * @savings_pool).round(2) }
+  savings_vals   = @savings_allocations.map { |a|
+    pct = total_weight > 0 ? a[:weight] / total_weight : 0
+    (pct * @savings_pool).round(2)
+  }
   savings_colors = @savings_allocations.each_with_index.map { |_, i| palette[i % palette.length] }
   donut_labels   = ["Expenses"] + savings_names + ["Remaining"]
   donut_vals     = [@total_expenses.round(2)] + savings_vals + [[remaining, 0].max.round(2)]
   donut_colors   = ["#ef4444"] + savings_colors + ["#10b981"]
+
+  cat_totals = @categories.each_with_index.map do |cat, i|
+    total = @expense_items.select { |item| item[:expense_category_id] == cat[:id] }.sum { |item| item[:amount] }
+    { name: cat[:name], total: total, color: exp_palette[i % exp_palette.length] }
+  end.select { |c| c[:total] > 0 }
 %>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
   <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
     <div class="px-6 py-4 border-b border-slate-100">
       <h2 class="text-sm font-semibold text-slate-900">Where Your Money Goes</h2>
@@ -108,6 +122,17 @@
       <canvas id="incomeChart"></canvas>
     </div>
   </div>
+
+  <% unless cat_totals.empty? %>
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="text-sm font-semibold text-slate-900">Expenses by Category</h2>
+    </div>
+    <div class="px-6 py-6 flex items-center justify-center" style="min-height:280px">
+      <canvas id="expenseDonut"></canvas>
+    </div>
+  </div>
+  <% end %>
 
   <% unless @savings_allocations.empty? %>
   <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
@@ -144,6 +169,31 @@
       }
     }
   });
+
+  <% unless cat_totals.empty? %>
+  new Chart(document.getElementById('expenseDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: <%= cat_totals.map { |c| c[:name] }.to_json %>,
+      datasets: [{
+        data:            <%= cat_totals.map { |c| c[:total].round(2) }.to_json %>,
+        backgroundColor: <%= cat_totals.map { |c| c[:color] }.to_json %>,
+        borderWidth: 3,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 12 } } },
+        tooltip: { callbacks: { label: c => {
+          const total = c.dataset.data.reduce((a, b) => a + b, 0);
+          return ' ' + (c.parsed / total * 100).toFixed(1) + '%';
+        }}}
+      }
+    }
+  });
+  <% end %>
 
   <% unless @savings_allocations.empty? %>
   new Chart(document.getElementById('savingsChart'), {

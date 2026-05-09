@@ -1,0 +1,22 @@
+<tr id="savings-<%= allocation[:id] %>" class="savings-row">
+  <td class="py-3 pr-4 text-slate-900 font-medium"><%= allocation[:name] %></td>
+  <td class="py-3 pr-4">
+    <input type="range" name="weight[<%= allocation[:id] %>]"
+           value="<%= allocation[:weight] %>" min="1" max="100"
+           class="weight-slider w-full accent-indigo-600 cursor-pointer"
+           oninput="updateAllocations()">
+  </td>
+  <td class="py-3 text-right">
+    <span class="pct-cell text-sm font-medium text-slate-700"><%= pct %>%</span>
+  </td>
+  <td class="py-3 text-right">
+    <span class="amt-cell font-medium">$<%= "%.2f" % amount %></span>
+  </td>
+  <td class="py-3 text-right">
+    <button class="text-slate-300 hover:text-red-500 text-xs transition-colors"
+      hx-delete="/savings/<%= allocation[:id] %>"
+      hx-target="#savings-<%= allocation[:id] %>"
+      hx-swap="outerHTML"
+      hx-on::after-request="updateAllocations()">Delete</button>
+  </td>
+</tr>

@@ -3,45 +3,78 @@
   <p class="text-sm text-slate-500 mt-1">Track your monthly expenses by category.</p>
 </div>
 
-<div class="space-y-4">
-<% @categories.each do |category| %>
-  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
-    <div class="px-6 py-4 border-b border-slate-100">
-      <h2 class="text-sm font-semibold text-slate-900"><%= category[:name] %></h2>
-    </div>
-    <div class="px-6 py-4">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-slate-100 text-left">
-            <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
-            <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Amount</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="expense-category-<%= category[:id] %>" class="divide-y divide-slate-50">
-          <% @expense_items.select { |i| i[:expense_category_id] == category[:id] }.each do |item| %>
-            <%= erb :expense_row, locals: { item: item } %>
-          <% end %>
-        </tbody>
-      </table>
+<%
+  exp_palette     = %w[#6366f1 #06b6d4 #10b981 #f59e0b #f43f5e #8b5cf6 #ec4899 #14b8a6]
+  category_totals = @categories.each_with_index.map do |cat, i|
+    total = @expense_items.select { |item| item[:expense_category_id] == cat[:id] }.sum { |item| item[:amount] }
+    { name: cat[:name], total: total, color: exp_palette[i % exp_palette.length] }
+  end.select { |c| c[:total] > 0 }
+%>
 
-      <form hx-post="/expenses"
-            hx-target="#expense-category-<%= category[:id] %>"
-            hx-swap="beforeend"
-            class="flex gap-3 mt-4 pt-4 border-t border-slate-100">
-        <input type="hidden" name="expense_category_id" value="<%= category[:id] %>">
-        <input type="text" name="name"
-               class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-               placeholder="Name" required>
-        <input type="number" name="amount"
-               class="w-36 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-               placeholder="Amount" step="0.01" required>
-        <button type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          Add
-        </button>
-      </form>
-    </div>
+<% unless category_totals.empty? %>
+<div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm mb-4">
+  <div class="px-6 py-4 border-b border-slate-100">
+    <h2 class="text-sm font-semibold text-slate-900">Expenses by Category</h2>
   </div>
+  <div class="px-6 py-6">
+    <canvas id="expensesChart" style="max-height:220px"></canvas>
+  </div>
+</div>
+
+<script>
+  Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+  Chart.defaults.color = '#94a3b8';
+
+  new Chart(document.getElementById('expensesChart'), {
+    type: 'bar',
+    data: {
+      labels: <%= category_totals.map { |c| c[:name] }.to_json %>,
+      datasets: [{
+        data:            <%= category_totals.map { |c| c[:total].round(2) }.to_json %>,
+        backgroundColor: <%= category_totals.map { |c| c[:color] }.to_json %>,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ' $' + c.parsed.x.toFixed(2) } }
+      },
+      scales: {
+        x: { ticks: { callback: v => '$' + v }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+</script>
 <% end %>
+
+<div id="categories-list" class="space-y-4 mb-4">
+  <% @categories.each do |category| %>
+    <% items = @expense_items.select { |i| i[:expense_category_id] == category[:id] } %>
+    <%= erb :expense_category, locals: { category: category, items: items } %>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+  <div class="px-6 py-4 border-b border-slate-100">
+    <h2 class="text-sm font-semibold text-slate-900">Add Category</h2>
+  </div>
+  <div class="px-6 py-4">
+    <form hx-post="/expense_categories"
+          hx-target="#categories-list"
+          hx-swap="beforeend"
+          hx-on::after-request="this.reset()"
+          class="flex gap-3">
+      <input type="text" name="name"
+             class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+             placeholder="Category name (e.g. Subscriptions)" required>
+      <button type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        Add Category
+      </button>
+    </form>
+  </div>
 </div>
