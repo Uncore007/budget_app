@@ -104,3 +104,87 @@
     </div>
   </div>
 </div>
+
+<%
+  palette        = %w[#0d6efd #0dcaf0 #20c997 #6610f2 #fd7e14 #ffc107]
+  savings_names  = @savings_allocations.map { |a| a[:name] }
+  savings_vals   = @savings_allocations.map { |a| (a[:rate] * @savings_pool).round(2) }
+  savings_colors = @savings_allocations.each_with_index.map { |_, i| palette[i % palette.length] }
+
+  donut_labels = ["Expenses"] + savings_names + ["Remaining"]
+  donut_vals   = [@total_expenses.round(2)] + savings_vals + [[remaining, 0].max.round(2)]
+  donut_colors = ["#dc3545"] + savings_colors + ["#198754"]
+%>
+
+<div class="row g-4 mt-2">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header fw-bold">Where Your Money Goes</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="incomeChart" style="max-height:300px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <% unless @savings_allocations.empty? %>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header fw-bold">Savings Allocations</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="savingsChart" style="max-height:300px"></canvas>
+      </div>
+    </div>
+  </div>
+  <% end %>
+</div>
+
+<script>
+  const fmt = v => '$' + v.toFixed(2);
+
+  new Chart(document.getElementById('incomeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: <%= donut_labels.to_json %>,
+      datasets: [{
+        data: <%= donut_vals.to_json %>,
+        backgroundColor: <%= donut_colors.to_json %>,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: c => ' ' + fmt(c.parsed) } }
+      }
+    }
+  });
+
+  <% unless @savings_allocations.empty? %>
+  new Chart(document.getElementById('savingsChart'), {
+    type: 'bar',
+    data: {
+      labels: <%= savings_names.to_json %>,
+      datasets: [{
+        label: 'Amount',
+        data: <%= savings_vals.to_json %>,
+        backgroundColor: <%= savings_colors.to_json %>,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ' ' + fmt(c.parsed.x) } }
+      },
+      scales: {
+        x: {
+          ticks: { callback: v => '$' + v }
+        }
+      }
+    }
+  });
+  <% end %>
+</script>
