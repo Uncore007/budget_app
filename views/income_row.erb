@@ -3,6 +3,15 @@
   <td class="py-3 text-right text-slate-500">$<%= "%.2f" % source[:amount] %></td>
   <td class="py-3 text-right text-slate-500"><%= (source[:tax_rate] * 100).round(1) %>%</td>
   <td class="py-3 text-right font-medium">$<%= "%.2f" % (source[:amount] * (1 - source[:tax_rate])) %></td>
+  <td class="py-3 text-center">
+    <input type="checkbox"
+           class="accent-indigo-600 cursor-pointer"
+           <%= source[:tithe_exempt] ? 'checked' : '' %>
+           hx-patch="/income/<%= source[:id] %>/tithe_exempt"
+           hx-vals='js:{tithe_exempt: event.target.checked.toString()}'
+           hx-trigger="change"
+           hx-swap="none">
+  </td>
   <td class="py-3 text-right">
     <div class="flex gap-3 justify-end">
       <button class="text-slate-400 hover:text-indigo-500 text-xs transition-colors"

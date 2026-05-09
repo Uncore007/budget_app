@@ -3,6 +3,55 @@
   <p class="text-sm text-slate-500 mt-1">Track your gross income sources and tax rates.</p>
 </div>
 
+<div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm mb-4">
+  <div class="px-6 py-4 border-b border-slate-100">
+    <h2 class="text-sm font-semibold text-slate-900">Tithe</h2>
+  </div>
+  <div class="px-6 py-5">
+    <div class="flex items-center justify-between gap-8">
+      <div class="text-sm text-slate-500 space-y-1">
+        <p>Calculated on net income after tax, minus any tithe-exempt expenses.</p>
+        <% if @tithe_rate > 0 %>
+          <div class="mt-2 space-y-0.5">
+            <% @income_sources.each do |s| %>
+              <div class="flex gap-6">
+                <span class="w-36 text-slate-400"><%= s[:name] %></span>
+                <% if s[:tithe_exempt] %>
+                  <span class="text-slate-400 line-through">$<%= "%.2f" % (s[:amount] * (1 - s[:tax_rate])) %></span>
+                  <span class="text-xs text-slate-400 self-center">exempt</span>
+                <% else %>
+                  <span class="text-slate-700">$<%= "%.2f" % (s[:amount] * (1 - s[:tax_rate])) %></span>
+                <% end %>
+              </div>
+            <% end %>
+            <div class="flex gap-6 border-t border-slate-100 pt-1 mt-1">
+              <span class="w-36 text-slate-400">Tithe base</span>
+              <span class="text-slate-700">$<%= "%.2f" % @tithe_base %></span>
+            </div>
+            <div class="flex gap-6 font-medium">
+              <span class="w-36 text-slate-600">Tithe (<%= (@tithe_rate * 100).round(1) %>%)</span>
+              <span class="text-slate-900">$<%= "%.2f" % @tithe %>/mo</span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <form action="/settings/tithe" method="post" class="flex items-center gap-2 shrink-0">
+        <div class="relative">
+          <input type="number" name="tithe_rate"
+                 value="<%= (@tithe_rate * 100).round(1) %>"
+                 step="0.1" min="0" max="100"
+                 class="w-24 rounded-lg border border-slate-200 px-3 py-2 pr-7 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">%</span>
+        </div>
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          Save
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
   <div class="px-6 py-4 border-b border-slate-100">
     <h2 class="text-sm font-semibold text-slate-900">Income Sources</h2>
@@ -15,6 +64,7 @@
           <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Gross</th>
           <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Tax Rate</th>
           <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Net</th>
+          <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-center">Tithe Exempt</th>
           <th></th>
         </tr>
       </thead>

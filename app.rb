@@ -9,12 +9,17 @@ helpers do
   def calculate_totals
     income_sources = DB[:income_sources].all
     expense_items  = DB[:expense_items].all
+    tithe_setting  = DB[:settings].where(key: 'tithe_rate').first
+    tithe_rate     = tithe_setting ? tithe_setting[:value].to_f : 0.0
 
     total_income   = income_sources.sum { |s| s[:amount] * (1 - s[:tax_rate]) }
     total_expenses = expense_items.sum  { |i| i[:amount] }
-    savings_pool   = total_income - total_expenses
+    tithe_base     = income_sources.reject { |s| s[:tithe_exempt] }
+                                   .sum { |s| s[:amount] * (1 - s[:tax_rate]) }
+    tithe          = (tithe_base * tithe_rate).round(2)
+    savings_pool   = total_income - tithe - total_expenses
 
-    [total_income, total_expenses, savings_pool]
+    [total_income, total_expenses, savings_pool, tithe, tithe_rate]
   end
 
   # Returns array of [with_returns, contributions_only] pairs, one per year up to `years`.
@@ -49,14 +54,29 @@ get "/" do
   @savings_allocations = DB[:savings_allocations].all
   @categories          = DB[:expense_categories].all
   @expense_items       = DB[:expense_items].all
-  @total_income, @total_expenses, @savings_pool = calculate_totals
+  @total_income, @total_expenses, @savings_pool, @tithe, @tithe_rate = calculate_totals
   erb :index
 end
 
 # Income routes
 get "/income" do
   @income_sources = DB[:income_sources].all
+  @total_income, @total_expenses, @savings_pool, @tithe, @tithe_rate = calculate_totals
+  @tithe_exemptions = @income_sources.select { |s| s[:tithe_exempt] }
+                                     .map { |s| { name: s[:name], net: s[:amount] * (1 - s[:tax_rate]) } }
+  @tithe_base = @income_sources.reject { |s| s[:tithe_exempt] }
+                               .sum { |s| s[:amount] * (1 - s[:tax_rate]) }
   erb :income
+end
+
+post "/settings/tithe" do
+  rate = params[:tithe_rate].to_f / 100.0
+  if DB[:settings].where(key: 'tithe_rate').first
+    DB[:settings].where(key: 'tithe_rate').update(value: rate.to_s)
+  else
+    DB[:settings].insert(key: 'tithe_rate', value: rate.to_s)
+  end
+  redirect "/income"
 end
 
 post "/income" do
@@ -77,6 +97,12 @@ end
 get "/income/:id" do
   source = DB[:income_sources].where(id: params[:id].to_i).first
   erb :income_row, layout: false, locals: { source: source }
+end
+
+patch "/income/:id/tithe_exempt" do
+  exempt = params[:tithe_exempt] == 'true'
+  DB[:income_sources].where(id: params[:id].to_i).update(tithe_exempt: exempt)
+  ""
 end
 
 patch "/income/:id" do
@@ -151,7 +177,7 @@ end
 # Savings routes
 get "/savings" do
   @savings_allocations = DB[:savings_allocations].all
-  @total_income, @total_expenses, @savings_pool = calculate_totals
+  @total_income, @total_expenses, @savings_pool, @tithe, @tithe_rate = calculate_totals
   erb :savings
 end
 

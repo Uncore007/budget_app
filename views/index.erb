@@ -36,10 +36,22 @@
         <span class="text-slate-500">Net Income</span>
         <span class="font-medium">$<%= "%.2f" % @total_income %></span>
       </div>
-      <div class="flex justify-between">
-        <span class="text-slate-500">Expenses</span>
-        <span class="font-medium text-red-500">−$<%= "%.2f" % @total_expenses %></span>
-      </div>
+      <% if @tithe_rate > 0 %>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Tithe (<%= (@tithe_rate * 100).round(1) %>%)</span>
+          <span class="font-medium text-red-500">−$<%= "%.2f" % @tithe %></span>
+        </div>
+        <div class="border-t border-slate-100 pt-3 flex justify-between">
+          <span class="text-slate-500">After Tithe</span>
+          <span class="font-medium">$<%= "%.2f" % (@total_income - @tithe) %></span>
+        </div>
+        <div class="flex justify-between">
+      <% else %>
+        <div class="border-t border-slate-100 pt-3 flex justify-between">
+      <% end %>
+          <span class="text-slate-500">Expenses</span>
+          <span class="font-medium text-red-500">−$<%= "%.2f" % @total_expenses %></span>
+        </div>
       <div class="border-t border-slate-100 pt-3 flex justify-between">
         <span class="text-slate-500">Available for Savings</span>
         <span class="font-medium">$<%= "%.2f" % @savings_pool %></span>
