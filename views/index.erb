@@ -1,34 +1,105 @@
+<%
+  total_savings = @savings_allocations.sum { |a| a[:rate] * @savings_pool }
+  remaining     = @savings_pool - total_savings
+%>
+
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <div class="text-muted small mb-1">Total Income</div>
+        <div class="fs-4 fw-bold text-success">$<%= "%.2f" % @total_income %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <div class="text-muted small mb-1">Total Expenses</div>
+        <div class="fs-4 fw-bold text-danger">$<%= "%.2f" % @total_expenses %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <div class="text-muted small mb-1">Savings</div>
+        <div class="fs-4 fw-bold text-primary">$<%= "%.2f" % total_savings %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <div class="text-muted small mb-1">Remaining</div>
+        <div class="fs-4 fw-bold <%= remaining >= 0 ? 'text-success' : 'text-danger' %>">$<%= "%.2f" % remaining %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-4">
-  <div class="col-md-8">
-    <div class="card mb-4">
-      <div class="card-header fw-bold">Income</div>
+  <div class="col-md-5">
+    <div class="card h-100">
+      <div class="card-header fw-bold">Budget Flow</div>
       <div class="card-body">
-        <%= erb :income %>
-      </div>
-    </div>
+        <dl class="row mb-0">
+          <dt class="col-7">Net Income</dt>
+          <dd class="col-5 text-end">$<%= "%.2f" % @total_income %></dd>
 
-    <div class="card mb-4">
-      <div class="card-header fw-bold">Expenses</div>
-      <div class="card-body">
-        <%= erb :expenses %>
-      </div>
-    </div>
+          <dt class="col-7">Expenses</dt>
+          <dd class="col-5 text-end text-danger">−$<%= "%.2f" % @total_expenses %></dd>
 
-    <div class="card">
-      <div class="card-header fw-bold">Savings</div>
-      <div class="card-body">
-        <%= erb :savings %>
+          <hr class="my-2">
+
+          <dt class="col-7">Available for Savings</dt>
+          <dd class="col-5 text-end">$<%= "%.2f" % @savings_pool %></dd>
+
+          <dt class="col-7">Allocated to Savings</dt>
+          <dd class="col-5 text-end text-danger">−$<%= "%.2f" % total_savings %></dd>
+
+          <hr class="my-2">
+
+          <dt class="col-7 fw-bold">Remaining</dt>
+          <dd class="col-5 text-end fw-bold <%= remaining >= 0 ? 'text-success' : 'text-danger' %>">$<%= "%.2f" % remaining %></dd>
+        </dl>
       </div>
     </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="card sticky-top" style="top: 1rem">
-      <div class="card-header fw-bold">Summary</div>
-      <div class="card-body"
-           id="summary"
-           hx-get="/summary"
-           hx-trigger="load, htmx:afterRequest from:body">
+  <div class="col-md-7">
+    <div class="card h-100">
+      <div class="card-header fw-bold">Savings Breakdown</div>
+      <div class="card-body">
+        <% if @savings_allocations.empty? %>
+          <p class="text-muted mb-0">No savings allocations yet. <a href="/savings">Add one.</a></p>
+        <% else %>
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th class="text-end">Rate</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @savings_allocations.each do |a| %>
+                <tr>
+                  <td><%= a[:name] %></td>
+                  <td class="text-end"><%= (a[:rate] * 100).round(1) %>%</td>
+                  <td class="text-end">$<%= "%.2f" % (a[:rate] * @savings_pool) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot class="table-group-divider fw-bold">
+              <tr>
+                <td>Total</td>
+                <td class="text-end"><%= (@savings_allocations.sum { |a| a[:rate] } * 100).round(1) %>%</td>
+                <td class="text-end">$<%= "%.2f" % total_savings %></td>
+              </tr>
+            </tfoot>
+          </table>
+        <% end %>
       </div>
     </div>
   </div>

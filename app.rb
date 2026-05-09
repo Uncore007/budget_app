@@ -18,9 +18,6 @@ helpers do
 end
 
 get "/" do
-  @income_sources      = DB[:income_sources].all
-  @categories          = DB[:expense_categories].all
-  @expense_items       = DB[:expense_items].all
   @savings_allocations = DB[:savings_allocations].all
   @total_income, @total_expenses, @savings_pool = calculate_totals
   erb :index
@@ -29,7 +26,7 @@ end
 # Income routes
 get "/income" do
   @income_sources = DB[:income_sources].all
-  erb :income, layout: false
+  erb :income
 end
 
 post "/income" do
@@ -48,6 +45,12 @@ delete "/income/:id" do
 end
 
 # Expense routes
+get "/expenses" do
+  @categories   = DB[:expense_categories].all
+  @expense_items = DB[:expense_items].all
+  erb :expenses
+end
+
 post "/expenses" do
   DB[:expense_items].insert(
     name:                params[:name],
@@ -64,6 +67,12 @@ delete "/expenses/:id" do
 end
 
 # Savings routes
+get "/savings" do
+  @savings_allocations = DB[:savings_allocations].all
+  @total_income, @total_expenses, @savings_pool = calculate_totals
+  erb :savings
+end
+
 post "/savings" do
   DB[:savings_allocations].insert(
     name: params[:name],
