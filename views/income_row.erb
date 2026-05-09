@@ -1,14 +1,18 @@
 <tr id="income-<%= source[:id] %>">
-  <td><%= source[:name] %></td>
-  <td>$<%= "%.2f" % source[:amount] %></td>
-  <td><%= (source[:tax_rate] * 100).round(1) %>%</td>
-  <td>$<%= "%.2f" % (source[:amount] * (1 - source[:tax_rate])) %></td>
-  <td>
-    <button class="btn btn-sm btn-danger"
-      hx-delete="/income/<%= source[:id] %>"
-      hx-target="#income-<%= source[:id] %>"
-      hx-swap="outerHTML">
-      Delete
-    </button>
+  <td class="py-3 text-slate-900"><%= source[:name] %></td>
+  <td class="py-3 text-right text-slate-500">$<%= "%.2f" % source[:amount] %></td>
+  <td class="py-3 text-right text-slate-500"><%= (source[:tax_rate] * 100).round(1) %>%</td>
+  <td class="py-3 text-right font-medium">$<%= "%.2f" % (source[:amount] * (1 - source[:tax_rate])) %></td>
+  <td class="py-3 text-right">
+    <div class="flex gap-3 justify-end">
+      <button class="text-slate-400 hover:text-indigo-500 text-xs transition-colors"
+        hx-get="/income/<%= source[:id] %>/edit"
+        hx-target="#income-<%= source[:id] %>"
+        hx-swap="outerHTML">Edit</button>
+      <button class="text-slate-300 hover:text-red-500 text-xs transition-colors"
+        hx-delete="/income/<%= source[:id] %>"
+        hx-target="#income-<%= source[:id] %>"
+        hx-swap="outerHTML">Delete</button>
+    </div>
   </td>
 </tr>

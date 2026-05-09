@@ -1,0 +1,24 @@
+<tr id="expense-<%= item[:id] %>" class="bg-slate-50">
+  <td class="py-2 pr-2">
+    <input type="text" name="name" value="<%= item[:name] %>"
+           class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+  </td>
+  <td class="py-2 pr-2">
+    <input type="number" name="amount" value="<%= item[:amount] %>"
+           class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+           step="0.01" min="0">
+  </td>
+  <td class="py-2 text-right">
+    <div class="flex gap-3 justify-end">
+      <button hx-patch="/expenses/<%= item[:id] %>"
+              hx-include="closest tr"
+              hx-target="#expense-<%= item[:id] %>"
+              hx-swap="outerHTML"
+              class="text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors">Save</button>
+      <button hx-get="/expenses/<%= item[:id] %>"
+              hx-target="#expense-<%= item[:id] %>"
+              hx-swap="outerHTML"
+              class="text-slate-400 hover:text-slate-600 text-xs transition-colors">Cancel</button>
+    </div>
+  </td>
+</tr>

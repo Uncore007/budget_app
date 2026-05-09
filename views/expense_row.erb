@@ -1,12 +1,16 @@
 <tr id="expense-<%= item[:id] %>">
-  <td><%= item[:name] %></td>
-  <td>$<%= "%.2f" % item[:amount] %></td>
-  <td>
-    <button class="btn btn-sm btn-danger"
-      hx-delete="/expenses/<%= item[:id] %>"
-      hx-target="#expense-<%= item[:id] %>"
-      hx-swap="outerHTML">
-      Delete
-    </button>
+  <td class="py-3 text-slate-900"><%= item[:name] %></td>
+  <td class="py-3 text-right font-medium">$<%= "%.2f" % item[:amount] %></td>
+  <td class="py-3 text-right">
+    <div class="flex gap-3 justify-end">
+      <button class="text-slate-400 hover:text-indigo-500 text-xs transition-colors"
+        hx-get="/expenses/<%= item[:id] %>/edit"
+        hx-target="#expense-<%= item[:id] %>"
+        hx-swap="outerHTML">Edit</button>
+      <button class="text-slate-300 hover:text-red-500 text-xs transition-colors"
+        hx-delete="/expenses/<%= item[:id] %>"
+        hx-target="#expense-<%= item[:id] %>"
+        hx-swap="outerHTML">Delete</button>
+    </div>
   </td>
 </tr>

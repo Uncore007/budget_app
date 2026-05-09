@@ -1,0 +1,28 @@
+<tr id="savings-<%= allocation[:id] %>" class="bg-slate-50">
+  <td class="py-2 pr-2">
+    <input type="text" name="name" value="<%= allocation[:name] %>"
+           class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+  </td>
+  <td class="py-2 pr-2">
+    <div class="relative">
+      <input type="number" name="rate" value="<%= (allocation[:rate] * 100).round %>"
+             class="w-full rounded-lg border border-slate-200 px-2 py-1.5 pr-7 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+             step="1" min="0" max="100">
+      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">%</span>
+    </div>
+  </td>
+  <td class="py-2 text-slate-300 text-right text-sm">—</td>
+  <td class="py-2 text-right">
+    <div class="flex gap-3 justify-end">
+      <button hx-patch="/savings/<%= allocation[:id] %>"
+              hx-include="closest tr"
+              hx-target="#savings-<%= allocation[:id] %>"
+              hx-swap="outerHTML"
+              class="text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors">Save</button>
+      <button hx-get="/savings/<%= allocation[:id] %>"
+              hx-target="#savings-<%= allocation[:id] %>"
+              hx-swap="outerHTML"
+              class="text-slate-400 hover:text-slate-600 text-xs transition-colors">Cancel</button>
+    </div>
+  </td>
+</tr>

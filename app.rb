@@ -33,9 +33,29 @@ post "/income" do
   DB[:income_sources].insert(
     name:     params[:name],
     amount:   params[:amount].to_f,
-    tax_rate: params[:tax_rate].to_f
+    tax_rate: params[:tax_rate].to_f / 100
   )
   source = DB[:income_sources].order(:id).last
+  erb :income_row, layout: false, locals: { source: source }
+end
+
+get "/income/:id/edit" do
+  source = DB[:income_sources].where(id: params[:id].to_i).first
+  erb :income_edit_row, layout: false, locals: { source: source }
+end
+
+get "/income/:id" do
+  source = DB[:income_sources].where(id: params[:id].to_i).first
+  erb :income_row, layout: false, locals: { source: source }
+end
+
+patch "/income/:id" do
+  DB[:income_sources].where(id: params[:id].to_i).update(
+    name:     params[:name],
+    amount:   params[:amount].to_f,
+    tax_rate: params[:tax_rate].to_f / 100
+  )
+  source = DB[:income_sources].where(id: params[:id].to_i).first
   erb :income_row, layout: false, locals: { source: source }
 end
 
@@ -61,6 +81,25 @@ post "/expenses" do
   erb :expense_row, layout: false, locals: { item: item }
 end
 
+get "/expenses/:id/edit" do
+  item = DB[:expense_items].where(id: params[:id].to_i).first
+  erb :expense_edit_row, layout: false, locals: { item: item }
+end
+
+get "/expenses/:id" do
+  item = DB[:expense_items].where(id: params[:id].to_i).first
+  erb :expense_row, layout: false, locals: { item: item }
+end
+
+patch "/expenses/:id" do
+  DB[:expense_items].where(id: params[:id].to_i).update(
+    name:   params[:name],
+    amount: params[:amount].to_f
+  )
+  item = DB[:expense_items].where(id: params[:id].to_i).first
+  erb :expense_row, layout: false, locals: { item: item }
+end
+
 delete "/expenses/:id" do
   DB[:expense_items].where(id: params[:id].to_i).delete
   ""
@@ -76,9 +115,30 @@ end
 post "/savings" do
   DB[:savings_allocations].insert(
     name: params[:name],
-    rate: params[:rate].to_f
+    rate: params[:rate].to_f / 100
   )
-  allocation   = DB[:savings_allocations].order(:id).last
+  allocation         = DB[:savings_allocations].order(:id).last
+  _, _, savings_pool = calculate_totals
+  erb :savings_row, layout: false, locals: { allocation: allocation, savings_pool: savings_pool }
+end
+
+get "/savings/:id/edit" do
+  allocation = DB[:savings_allocations].where(id: params[:id].to_i).first
+  erb :savings_edit_row, layout: false, locals: { allocation: allocation }
+end
+
+get "/savings/:id" do
+  allocation         = DB[:savings_allocations].where(id: params[:id].to_i).first
+  _, _, savings_pool = calculate_totals
+  erb :savings_row, layout: false, locals: { allocation: allocation, savings_pool: savings_pool }
+end
+
+patch "/savings/:id" do
+  DB[:savings_allocations].where(id: params[:id].to_i).update(
+    name: params[:name],
+    rate: params[:rate].to_f / 100
+  )
+  allocation         = DB[:savings_allocations].where(id: params[:id].to_i).first
   _, _, savings_pool = calculate_totals
   erb :savings_row, layout: false, locals: { allocation: allocation, savings_pool: savings_pool }
 end

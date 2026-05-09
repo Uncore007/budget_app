@@ -1,13 +1,17 @@
 <tr id="savings-<%= allocation[:id] %>">
-  <td><%= allocation[:name] %></td>
-  <td><%= (allocation[:rate] * 100).round(1) %>%</td>
-  <td>$<%= "%.2f" % (allocation[:rate] * savings_pool) %></td>
-  <td>
-    <button class="btn btn-sm btn-danger"
-      hx-delete="/savings/<%= allocation[:id] %>"
-      hx-target="#savings-<%= allocation[:id] %>"
-      hx-swap="outerHTML">
-      Delete
-    </button>
+  <td class="py-3 text-slate-900"><%= allocation[:name] %></td>
+  <td class="py-3 text-right text-slate-500"><%= (allocation[:rate] * 100).round(1) %>%</td>
+  <td class="py-3 text-right font-medium">$<%= "%.2f" % (allocation[:rate] * savings_pool) %></td>
+  <td class="py-3 text-right">
+    <div class="flex gap-3 justify-end">
+      <button class="text-slate-400 hover:text-indigo-500 text-xs transition-colors"
+        hx-get="/savings/<%= allocation[:id] %>/edit"
+        hx-target="#savings-<%= allocation[:id] %>"
+        hx-swap="outerHTML">Edit</button>
+      <button class="text-slate-300 hover:text-red-500 text-xs transition-colors"
+        hx-delete="/savings/<%= allocation[:id] %>"
+        hx-target="#savings-<%= allocation[:id] %>"
+        hx-swap="outerHTML">Delete</button>
+    </div>
   </td>
 </tr>

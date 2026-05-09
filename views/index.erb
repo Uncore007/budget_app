@@ -3,143 +3,127 @@
   remaining     = @savings_pool - total_savings
 %>
 
-<div class="row g-4 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card text-center h-100">
-      <div class="card-body py-4">
-        <div class="text-muted small mb-1">Total Income</div>
-        <div class="fs-4 fw-bold text-success">$<%= "%.2f" % @total_income %></div>
-      </div>
-    </div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm p-6 text-center">
+    <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-2">Net Income</p>
+    <p class="text-2xl font-bold text-emerald-600">$<%= "%.2f" % @total_income %></p>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card text-center h-100">
-      <div class="card-body py-4">
-        <div class="text-muted small mb-1">Total Expenses</div>
-        <div class="fs-4 fw-bold text-danger">$<%= "%.2f" % @total_expenses %></div>
-      </div>
-    </div>
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm p-6 text-center">
+    <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-2">Expenses</p>
+    <p class="text-2xl font-bold text-red-500">$<%= "%.2f" % @total_expenses %></p>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card text-center h-100">
-      <div class="card-body py-4">
-        <div class="text-muted small mb-1">Savings</div>
-        <div class="fs-4 fw-bold text-primary">$<%= "%.2f" % total_savings %></div>
-      </div>
-    </div>
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm p-6 text-center">
+    <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-2">Savings</p>
+    <p class="text-2xl font-bold text-indigo-600">$<%= "%.2f" % total_savings %></p>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card text-center h-100">
-      <div class="card-body py-4">
-        <div class="text-muted small mb-1">Remaining</div>
-        <div class="fs-4 fw-bold <%= remaining >= 0 ? 'text-success' : 'text-danger' %>">$<%= "%.2f" % remaining %></div>
-      </div>
-    </div>
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm p-6 text-center">
+    <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-2">Remaining</p>
+    <p class="text-2xl font-bold <%= remaining >= 0 ? 'text-emerald-600' : 'text-red-500' %>">$<%= "%.2f" % remaining %></p>
   </div>
 </div>
 
-<div class="row g-4">
-  <div class="col-md-5">
-    <div class="card h-100">
-      <div class="card-header fw-bold">Budget Flow</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-7">Net Income</dt>
-          <dd class="col-5 text-end">$<%= "%.2f" % @total_income %></dd>
-
-          <dt class="col-7">Expenses</dt>
-          <dd class="col-5 text-end text-danger">−$<%= "%.2f" % @total_expenses %></dd>
-
-          <hr class="my-2">
-
-          <dt class="col-7">Available for Savings</dt>
-          <dd class="col-5 text-end">$<%= "%.2f" % @savings_pool %></dd>
-
-          <dt class="col-7">Allocated to Savings</dt>
-          <dd class="col-5 text-end text-danger">−$<%= "%.2f" % total_savings %></dd>
-
-          <hr class="my-2">
-
-          <dt class="col-7 fw-bold">Remaining</dt>
-          <dd class="col-5 text-end fw-bold <%= remaining >= 0 ? 'text-success' : 'text-danger' %>">$<%= "%.2f" % remaining %></dd>
-        </dl>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+  <div class="md:col-span-2 bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="text-sm font-semibold text-slate-900">Budget Flow</h2>
+    </div>
+    <div class="px-6 py-5 space-y-3 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-500">Net Income</span>
+        <span class="font-medium">$<%= "%.2f" % @total_income %></span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-500">Expenses</span>
+        <span class="font-medium text-red-500">−$<%= "%.2f" % @total_expenses %></span>
+      </div>
+      <div class="border-t border-slate-100 pt-3 flex justify-between">
+        <span class="text-slate-500">Available for Savings</span>
+        <span class="font-medium">$<%= "%.2f" % @savings_pool %></span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-500">Allocated to Savings</span>
+        <span class="font-medium text-red-500">−$<%= "%.2f" % total_savings %></span>
+      </div>
+      <div class="border-t border-slate-100 pt-3 flex justify-between">
+        <span class="font-semibold">Remaining</span>
+        <span class="font-semibold <%= remaining >= 0 ? 'text-emerald-600' : 'text-red-500' %>">$<%= "%.2f" % remaining %></span>
       </div>
     </div>
   </div>
 
-  <div class="col-md-7">
-    <div class="card h-100">
-      <div class="card-header fw-bold">Savings Breakdown</div>
-      <div class="card-body">
-        <% if @savings_allocations.empty? %>
-          <p class="text-muted mb-0">No savings allocations yet. <a href="/savings">Add one.</a></p>
-        <% else %>
-          <table class="table table-sm mb-0">
-            <thead>
+  <div class="md:col-span-3 bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="text-sm font-semibold text-slate-900">Savings Breakdown</h2>
+    </div>
+    <div class="px-6 py-5">
+      <% if @savings_allocations.empty? %>
+        <p class="text-sm text-slate-400">No savings allocations yet. <a href="/savings" class="text-indigo-600 hover:underline">Add one.</a></p>
+      <% else %>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-left">
+              <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
+              <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Rate</th>
+              <th class="pb-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            <% @savings_allocations.each do |a| %>
               <tr>
-                <th>Name</th>
-                <th class="text-end">Rate</th>
-                <th class="text-end">Amount</th>
+                <td class="py-3 text-slate-900"><%= a[:name] %></td>
+                <td class="py-3 text-right text-slate-500"><%= (a[:rate] * 100).round(1) %>%</td>
+                <td class="py-3 text-right font-medium">$<%= "%.2f" % (a[:rate] * @savings_pool) %></td>
               </tr>
-            </thead>
-            <tbody>
-              <% @savings_allocations.each do |a| %>
-                <tr>
-                  <td><%= a[:name] %></td>
-                  <td class="text-end"><%= (a[:rate] * 100).round(1) %>%</td>
-                  <td class="text-end">$<%= "%.2f" % (a[:rate] * @savings_pool) %></td>
-                </tr>
-              <% end %>
-            </tbody>
-            <tfoot class="table-group-divider fw-bold">
-              <tr>
-                <td>Total</td>
-                <td class="text-end"><%= (@savings_allocations.sum { |a| a[:rate] } * 100).round(1) %>%</td>
-                <td class="text-end">$<%= "%.2f" % total_savings %></td>
-              </tr>
-            </tfoot>
-          </table>
-        <% end %>
-      </div>
+            <% end %>
+          </tbody>
+          <tfoot class="border-t border-slate-200">
+            <tr>
+              <td class="pt-3 font-semibold">Total</td>
+              <td class="pt-3 text-right font-semibold"><%= (@savings_allocations.sum { |a| a[:rate] } * 100).round(1) %>%</td>
+              <td class="pt-3 text-right font-semibold">$<%= "%.2f" % total_savings %></td>
+            </tr>
+          </tfoot>
+        </table>
+      <% end %>
     </div>
   </div>
 </div>
 
 <%
-  palette        = %w[#0d6efd #0dcaf0 #20c997 #6610f2 #fd7e14 #ffc107]
+  palette        = %w[#6366f1 #06b6d4 #10b981 #f59e0b #f43f5e #8b5cf6]
   savings_names  = @savings_allocations.map { |a| a[:name] }
   savings_vals   = @savings_allocations.map { |a| (a[:rate] * @savings_pool).round(2) }
   savings_colors = @savings_allocations.each_with_index.map { |_, i| palette[i % palette.length] }
-
-  donut_labels = ["Expenses"] + savings_names + ["Remaining"]
-  donut_vals   = [@total_expenses.round(2)] + savings_vals + [[remaining, 0].max.round(2)]
-  donut_colors = ["#dc3545"] + savings_colors + ["#198754"]
+  donut_labels   = ["Expenses"] + savings_names + ["Remaining"]
+  donut_vals     = [@total_expenses.round(2)] + savings_vals + [[remaining, 0].max.round(2)]
+  donut_colors   = ["#ef4444"] + savings_colors + ["#10b981"]
 %>
 
-<div class="row g-4 mt-2">
-  <div class="col-md-6">
-    <div class="card h-100">
-      <div class="card-header fw-bold">Where Your Money Goes</div>
-      <div class="card-body d-flex align-items-center justify-content-center">
-        <canvas id="incomeChart" style="max-height:300px"></canvas>
-      </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="text-sm font-semibold text-slate-900">Where Your Money Goes</h2>
+    </div>
+    <div class="px-6 py-6 flex items-center justify-center" style="min-height:280px">
+      <canvas id="incomeChart"></canvas>
     </div>
   </div>
 
   <% unless @savings_allocations.empty? %>
-  <div class="col-md-6">
-    <div class="card h-100">
-      <div class="card-header fw-bold">Savings Allocations</div>
-      <div class="card-body d-flex align-items-center justify-content-center">
-        <canvas id="savingsChart" style="max-height:300px"></canvas>
-      </div>
+  <div class="bg-white rounded-xl ring-1 ring-slate-900/5 shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="text-sm font-semibold text-slate-900">Savings Allocations</h2>
+    </div>
+    <div class="px-6 py-6 flex items-center justify-center" style="min-height:280px">
+      <canvas id="savingsChart"></canvas>
     </div>
   </div>
   <% end %>
 </div>
 
 <script>
-  const fmt = v => '$' + v.toFixed(2);
+  Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+  Chart.defaults.color = '#94a3b8';
 
   new Chart(document.getElementById('incomeChart'), {
     type: 'doughnut',
@@ -148,15 +132,15 @@
       datasets: [{
         data: <%= donut_vals.to_json %>,
         backgroundColor: <%= donut_colors.to_json %>,
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: '#fff'
       }]
     },
     options: {
-      cutout: '60%',
+      cutout: '68%',
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
-        tooltip: { callbacks: { label: c => ' ' + fmt(c.parsed) } }
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 12 } } },
+        tooltip: { callbacks: { label: c => ' $' + c.parsed.toFixed(2) } }
       }
     }
   });
@@ -167,22 +151,21 @@
     data: {
       labels: <%= savings_names.to_json %>,
       datasets: [{
-        label: 'Amount',
         data: <%= savings_vals.to_json %>,
         backgroundColor: <%= savings_colors.to_json %>,
-        borderRadius: 4
+        borderRadius: 6,
+        borderSkipped: false
       }]
     },
     options: {
       indexAxis: 'y',
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => ' ' + fmt(c.parsed.x) } }
+        tooltip: { callbacks: { label: c => ' $' + c.parsed.x.toFixed(2) } }
       },
       scales: {
-        x: {
-          ticks: { callback: v => '$' + v }
-        }
+        x: { ticks: { callback: v => '$' + v }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
       }
     }
   });
