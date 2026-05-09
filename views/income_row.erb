@@ -1,0 +1,14 @@
+<tr id="income-<%= source[:id] %>">
+  <td><%= source[:name] %></td>
+  <td>$<%= "%.2f" % source[:amount] %></td>
+  <td><%= (source[:tax_rate] * 100).round(1) %>%</td>
+  <td>$<%= "%.2f" % (source[:amount] * (1 - source[:tax_rate])) %></td>
+  <td>
+    <button class="btn btn-sm btn-danger"
+      hx-delete="/income/<%= source[:id] %>"
+      hx-target="#income-<%= source[:id] %>"
+      hx-swap="outerHTML">
+      Delete
+    </button>
+  </td>
+</tr>

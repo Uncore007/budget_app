@@ -1,0 +1,13 @@
+<tr id="savings-<%= allocation[:id] %>">
+  <td><%= allocation[:name] %></td>
+  <td><%= (allocation[:rate] * 100).round(1) %>%</td>
+  <td>$<%= "%.2f" % (allocation[:rate] * savings_pool) %></td>
+  <td>
+    <button class="btn btn-sm btn-danger"
+      hx-delete="/savings/<%= allocation[:id] %>"
+      hx-target="#savings-<%= allocation[:id] %>"
+      hx-swap="outerHTML">
+      Delete
+    </button>
+  </td>
+</tr>

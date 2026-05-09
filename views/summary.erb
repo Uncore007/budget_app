@@ -1,0 +1,24 @@
+<% remaining = @savings_pool - @savings_allocations.sum { |a| a[:rate] * @savings_pool } %>
+
+<dl class="row mb-0">
+  <dt class="col-7">Total Income</dt>
+  <dd class="col-5 text-end">$<%= "%.2f" % @total_income %></dd>
+
+  <dt class="col-7">Total Expenses</dt>
+  <dd class="col-5 text-end text-danger">-$<%= "%.2f" % @total_expenses %></dd>
+
+  <hr>
+
+  <dt class="col-7">Available for Savings</dt>
+  <dd class="col-5 text-end">$<%= "%.2f" % @savings_pool %></dd>
+
+  <dt class="col-7">Allocated to Savings</dt>
+  <dd class="col-5 text-end text-danger">-$<%= "%.2f" % @savings_allocations.sum { |a| a[:rate] * @savings_pool } %></dd>
+
+  <hr>
+
+  <dt class="col-7 fw-bold">Remaining</dt>
+  <dd class="col-5 text-end fw-bold <%= remaining >= 0 ? 'text-success' : 'text-danger' %>">
+    $<%= "%.2f" % remaining %>
+  </dd>
+</dl>

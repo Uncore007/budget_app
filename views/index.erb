@@ -1,0 +1,35 @@
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-header fw-bold">Income</div>
+      <div class="card-body">
+        <%= erb :income %>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header fw-bold">Expenses</div>
+      <div class="card-body">
+        <%= erb :expenses %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-bold">Savings</div>
+      <div class="card-body">
+        <%= erb :savings %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card sticky-top" style="top: 1rem">
+      <div class="card-header fw-bold">Summary</div>
+      <div class="card-body"
+           id="summary"
+           hx-get="/summary"
+           hx-trigger="load, htmx:afterRequest from:body">
+      </div>
+    </div>
+  </div>
+</div>

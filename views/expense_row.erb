@@ -1,0 +1,12 @@
+<tr id="expense-<%= item[:id] %>">
+  <td><%= item[:name] %></td>
+  <td>$<%= "%.2f" % item[:amount] %></td>
+  <td>
+    <button class="btn btn-sm btn-danger"
+      hx-delete="/expenses/<%= item[:id] %>"
+      hx-target="#expense-<%= item[:id] %>"
+      hx-swap="outerHTML">
+      Delete
+    </button>
+  </td>
+</tr>
